@@ -1,0 +1,14 @@
+{
+    "Checkbox Annotations": {
+        "Checkbox Annotation1": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"},
+        "Checkbox Annotation2": {"type": "checkbox", "tooltip": "Tooltip for Annotation2"}
+    },
+    "Likert Scale Annotations": {
+        "Likert Annotation1": {"type": "likert", "tooltip": "Tooltip for Likert1", "scale": 5}, 
+        "Likert Annotation2": {"type": "likert", "tooltip": "Tooltip for Likert2", "scale": 7}
+    },
+    "Dropdown Annotations": {
+        "Dropdown Annotation1": {"type": "dropdown", "tooltip": "Tooltip for Dropdown1", "options": ["Option1", "Option2", "Option3"]},
+        "Dropdown Annotation2": {"type": "dropdown", "tooltip": "Tooltip for Dropdown2", "options": ["OptionA", "OptionB"]}
+    }
+}
