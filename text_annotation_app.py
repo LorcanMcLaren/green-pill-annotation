@@ -48,6 +48,18 @@ def download_link(object_to_download, download_filename, download_link_text):
 def annotation_page():
     """Displays annotation interface and handles navigation."""
     st.title("Text Annotation")
+
+    # Check if 'index' and 'data' are initialized in session state
+    if 'index' not in st.session_state or 'data' not in st.session_state or st.session_state.data is None:
+        st.warning("Please upload a CSV file to start annotating.")
+        if st.button("Return to Landing Page"):
+            st.session_state.page = 'landing'  # Change the page state
+            st.session_state.pop('index', None)  # Optionally clear 'index' from session state
+            st.session_state.pop('data', None)  # Optionally clear 'data' from session state
+            st.rerun()  # Rerun the app to reflect the change
+        return  # Exit the function to prevent further execution
+
+    # Now it's safe to access 'index' and 'data'
     index = st.session_state.index - 1  # Adjust index for 1-based indexing
     data = st.session_state.data
 
