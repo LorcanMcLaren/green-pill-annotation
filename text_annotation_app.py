@@ -4,8 +4,20 @@ import base64
 import json
 
 # Updated annotation options with types and potential options for Likert scales and dropdowns
-with open('annotation_schema.json') as f:
-    annotation_options = json.load(f)
+annotation_schema = {
+    "Checkbox Annotations": {
+        "Checkbox Annotation1": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"},
+        "Checkbox Annotation2": {"type": "checkbox", "tooltip": "Tooltip for Annotation2"}
+    },
+    "Likert Scale Annotations": {
+        "Likert Annotation1": {"type": "likert", "tooltip": "Tooltip for Likert1", "scale": 5}, 
+        "Likert Annotation2": {"type": "likert", "tooltip": "Tooltip for Likert2", "scale": 7}
+    },
+    "Dropdown Annotations": {
+        "Dropdown Annotation1": {"type": "dropdown", "tooltip": "Tooltip for Dropdown1", "options": ["Option1", "Option2", "Option3"]},
+        "Dropdown Annotation2": {"type": "dropdown", "tooltip": "Tooltip for Dropdown2", "options": ["OptionA", "OptionB"]}
+    }
+}
 
 
 def process_data(uploaded_file, text_column):
@@ -17,7 +29,7 @@ def process_data(uploaded_file, text_column):
     if text_column not in df.columns:
         raise ValueError(f"Selected column '{text_column}' not found in the uploaded file.")
 
-    for subsection, annotations in annotation_options.items():
+    for subsection, annotations in annotation_schema.items():
         for annotation_option in annotations.keys():
             if annotation_option not in df.columns:
                 df[annotation_option] = None  # Use None to accommodate different types of data
@@ -51,7 +63,7 @@ def annotation_page():
     if 'annotations' not in st.session_state:
         st.session_state.annotations = {}
     
-    for subsection, annotations in annotation_options.items():
+    for subsection, annotations in annotation_schema.items():
         st.subheader(subsection)
         for annotation_option, config in annotations.items():
             if config['type'] == 'checkbox':
