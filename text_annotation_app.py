@@ -5,20 +5,28 @@ import json
 
 # Updated annotation options with types and potential options for Likert scales and dropdowns
 annotation_schema = {
-    "Checkbox Annotations": {
-        "Checkbox Annotation1": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"},
-        "Checkbox Annotation2": {"type": "checkbox", "tooltip": "Tooltip for Annotation2"}
+    "Discrete Emotions": {
+        "Anger": {"type": "checkbox", "tooltip": "Updated annotation options with types and potential options for Likert scales and dropdowns. Updated annotation options with types and potential options for Likert scales and dropdowns. Updated annotation options with types and potential options for Likert scales and dropdowns."},
+        "Fear": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"},
+        "Disgust": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"},
+        "Sadness": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"},
+        "Joy": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"},
+        "Enthusiasm": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"}
     },
-    "Likert Scale Annotations": {
-        "Likert Annotation1": {"type": "likert", "tooltip": "Tooltip for Likert1", "scale": 5}, 
-        "Likert Annotation2": {"type": "likert", "tooltip": "Tooltip for Likert2", "scale": 7}
+    "Moral Foundations": {
+        "Care/Harm": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"},
+        "Fairness/Cheating": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"},
+        "Loyalty/Betrayal": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"},
+        "Authority/Subversion": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"},
+        "Purity/Degradation": {"type": "checkbox", "tooltip": "Tooltip for Annotation1"}
     },
-    "Dropdown Annotations": {
-        "Dropdown Annotation1": {"type": "dropdown", "tooltip": "Tooltip for Dropdown1", "options": ["Option1", "Option2", "Option3"]},
-        "Dropdown Annotation2": {"type": "dropdown", "tooltip": "Tooltip for Dropdown2", "options": ["OptionA", "OptionB"]}
+    "Psychological Distance": {
+        "Spatial Distance": {"type": "likert", "tooltip": "Tooltip for Likert1", "scale": 5},
+        "Temporal Distance": {"type": "dropdown", "tooltip": "Tooltip for Dropdown1", "options": ["Option1", "Option2", "Option3"]},
+        "Social Group Distance": {"type": "dropdown", "tooltip": "Tooltip for Dropdown1", "options": ["Option1", "Option2", "Option3"]},
+        "Probability": {"type": "likert", "tooltip": "Tooltip for Likert1", "scale": 5}
     }
 }
-
 
 def process_data(uploaded_file, text_column):
     """Processes uploaded CSV file, adding missing annotation columns and setting the text column for annotation."""
@@ -47,7 +55,7 @@ def download_link(object_to_download, download_filename, download_link_text):
 
 def annotation_page():
     """Displays annotation interface and handles navigation."""
-    st.title("Text Annotation")
+    st.title("The Green Pill Project 🧪")
 
     # Check if 'index' and 'data' are initialized in session state
     if 'index' not in st.session_state or 'data' not in st.session_state or st.session_state.data is None:
@@ -67,82 +75,80 @@ def annotation_page():
         st.warning("Please upload a CSV file to start annotating.")
         return
 
-    # Display the current text in a scrollable container
-    current_text = data.iloc[index][st.session_state.text_column]
-    st.markdown(f'<div style="height: 200px; overflow-y: scroll; border: 1px solid #ced4da; border-radius: 4px; padding: 10px;">{current_text}</div>', unsafe_allow_html=True)
+    # Create two columns for layout, with the left column being wider
+    left_column, right_column = st.columns([0.7, 0.3], gap='large')
 
-    # Initialize or update annotation states for the current index
-    if 'annotations' not in st.session_state:
-        st.session_state.annotations = {}
-    
-    for subsection, annotations in annotation_schema.items():
-        st.subheader(subsection)
-        for annotation_option, config in annotations.items():
-            if config['type'] == 'checkbox':
-                annotated = st.checkbox(annotation_option, value=bool(data.at[index, annotation_option]) if pd.notna(data.at[index, annotation_option]) else False, key=f'{index}_{annotation_option}', help=config['tooltip'])
-                st.session_state.annotations[annotation_option] = 1 if annotated else 0
-            elif config['type'] == 'likert':
-                # Set a default value for the Likert scale
-                default_value = 0  # Assuming 0 is within your scale and represents the default/unset state
-                annotated = st.slider(annotation_option, 0, config['scale'], value=int(data.at[index, annotation_option]) if pd.notna(data.at[index, annotation_option]) else default_value, key=f'{index}_{annotation_option}', help=config['tooltip'], format="%d")
-                st.session_state.annotations[annotation_option] = annotated
-            elif config['type'] == 'dropdown':
-                # Adjusted dropdown logic to ensure selected_index is always valid
-                options = [""] + config['options']  # Prepend an empty option to represent no selection
-                current_value = data.at[index, annotation_option]
-                if pd.isna(current_value) or current_value not in options:
-                    selected_index = 0  # Default to no selection if current value is NA or not in options
-                else:
-                    selected_index = options.index(current_value)
-                annotated = st.selectbox(annotation_option, options, index=selected_index, key=f'{index}_{annotation_option}', help=config['tooltip'])
-                st.session_state.annotations[annotation_option] = annotated if annotated else None
+    with left_column:
+        # Display the selected title above the current text
+        title_column = st.session_state.title_column  # Retrieve the user-selected column for the title
+        current_title = data.iloc[index][title_column]  # Get the current title from the data
+        st.markdown(f"## {current_title}")  # Display the title as a header
 
-    # Add a separator and a label for clarity
-    st.markdown("---")
-    st.markdown("### Navigation Controls")
+        # Display the current text in a scrollable container
+        current_text = data.iloc[index][st.session_state.text_column]
+        st.markdown(f'<div style="height: 200px; overflow-y: scroll; border: 1px solid #ced4da; border-radius: 4px; padding: 10px;">{current_text}</div>', unsafe_allow_html=True)
 
-    # Navigation buttons with increased spacing
-    col1, col2, col3 = st.columns([1,1,2])
-    with col1:
-        if st.button("Previous") and index > 0:
-            st.session_state.prepare_return = False
-            update_data(index, data)  # Update the data dataframe before navigating
-            update_index(index)
+        # Initialize or update annotation states for the current index
+        if 'annotations' not in st.session_state:
+            st.session_state.annotations = {}
 
-    with col2:
+        for subsection, annotations in annotation_schema.items():
+            st.subheader(subsection)
+            for annotation_option, config in annotations.items():
+                if config['type'] == 'checkbox':
+                    annotated = st.checkbox(annotation_option, value=bool(data.at[index, annotation_option]) if pd.notna(data.at[index, annotation_option]) else False, key=f'{index}_{annotation_option}', help=config['tooltip'])
+                    st.session_state.annotations[annotation_option] = 1 if annotated else 0
+                elif config['type'] == 'likert':
+                    default_value = 0  # Assuming 0 is within your scale and represents the default/unset state
+                    annotated = st.slider(annotation_option, 0, config['scale'], value=int(data.at[index, annotation_option]) if pd.notna(data.at[index, annotation_option]) else default_value, key=f'{index}_{annotation_option}', help=config['tooltip'], format="%d")
+                    st.session_state.annotations[annotation_option] = annotated
+                elif config['type'] == 'dropdown':
+                    options = [""] + config['options']  # Prepend an empty option to represent no selection
+                    current_value = data.at[index, annotation_option]
+                    if pd.isna(current_value) or current_value not in options:
+                        selected_index = 0
+                    else:
+                        selected_index = options.index(current_value)
+                    annotated = st.selectbox(annotation_option, options, index=selected_index, key=f'{index}_{annotation_option}', help=config['tooltip'])
+                    st.session_state.annotations[annotation_option] = annotated if annotated else None
+
+    # Navigation controls and download button are now placed in a narrower right column
+    with right_column:
+        st.markdown("### Navigation Controls")
+
         if st.button("Next") and index < len(data) - 1:
             st.session_state.prepare_return = False
-            update_data(index, data)  # Update the data dataframe before navigating
+            update_data(index, data)
             update_index(index + 2)
 
-    with col3:  # Use the third column for the slider to provide more separation
-        new_index = st.slider("Go to Page", 1, len(data), index + 1, format="%d")
+        if st.button("Previous") and index > 0:
+            st.session_state.prepare_return = False
+            update_data(index, data)
+            update_index(index)
+
+        new_index = st.slider("Go to Item", 1, len(data), index + 1, format="%d")
         if new_index != index + 1:
             st.session_state.prepare_return = False
-            update_data(index, data)  # Update the data dataframe before navigating
+            update_data(index, data)
             update_index(new_index)
 
-    if st.button("Download Annotated CSV"):
-        st.session_state.prepare_return = False
-        update_data(index, data)  # Make sure the last viewed text's annotations are saved
-        tmp_download_link = download_link(data, 'annotated_data.csv', 'Click here to download your annotated CSV!')
-        st.markdown(tmp_download_link, unsafe_allow_html=True)
+        if st.button("Download Annotated CSV"):
+            st.session_state.prepare_return = False
+            update_data(index, data)
+            tmp_download_link = download_link(data, 'annotated_data.csv', 'Click here to download your annotated CSV')
+            st.markdown(tmp_download_link, unsafe_allow_html=True)
 
-    # Add a button to initiate the return to landing page process
-    if st.button("Annotate New Data"):
-        st.session_state.prepare_return = True  # Flag to show the warning and confirmation checkbox
+        if st.button("Annotate New Data"):
+            st.session_state.prepare_return = True
 
-    # If the flag is set, show the warning and confirmation checkbox
-    if st.session_state.get('prepare_return', False):
-        st.warning("Warning: Annotations that have not been downloaded will not be saved.")
-        confirmed = st.checkbox("I understand and wish to proceed.")
+        if st.session_state.get('prepare_return', False):
+            st.warning("Warning: Annotations that have not been downloaded will not be saved.")
+            confirmed = st.checkbox("I understand and wish to proceed.")
 
-        # If confirmed, change the page to landing and reset the prepare_return flag
-        if confirmed:
-            st.session_state.page = 'landing'
-            st.session_state.prepare_return = False  # Reset the flag
-            st.rerun()
-
+            if confirmed:
+                st.session_state.page = 'landing'
+                st.session_state.prepare_return = False
+                st.rerun()
 
 
 def landing_page():
@@ -159,6 +165,9 @@ def landing_page():
         # Allow the user to select the text column
         selected_column = st.selectbox("Select the column to annotate:", column_names)
         st.session_state.text_column = selected_column  # Store the selected column name in the session state
+
+        selected_title_column = st.selectbox("Select the column containing the debate title:", column_names)
+        st.session_state.title_column = selected_title_column  # Store the selected title column in session state
 
         # Reload the file and process the data using the selected column for text
         st.session_state.data = process_data(uploaded_file, selected_column)
@@ -185,6 +194,9 @@ if 'page' not in st.session_state:
     st.session_state.page = 'landing'
 
 if st.session_state.page == 'landing':
+    st.set_page_config(layout="centered")
     landing_page()
 elif st.session_state.page == 'annotate':
+    # Set the page to wide mode
+    st.set_page_config(layout="wide")
     annotation_page()
