@@ -82,35 +82,11 @@ def annotation_page():
         # Display the selected title above the current text
         title_column = st.session_state.title_column  # Retrieve the user-selected column for the title
         current_title = data.iloc[index][title_column]  # Get the current title from the data
-        st.markdown(f"## {current_title}")  # Display the title as a header
+        st.markdown(f"### {current_title}")  # Display the title as a header
 
         # Display the current text in a scrollable container
         current_text = data.iloc[index][st.session_state.text_column]
-        st.markdown(f'<div style="height: 200px; overflow-y: scroll; border: 1px solid #ced4da; border-radius: 4px; padding: 10px;">{current_text}</div>', unsafe_allow_html=True)
-
-        # Initialize or update annotation states for the current index
-        if 'annotations' not in st.session_state:
-            st.session_state.annotations = {}
-
-        for subsection, annotations in annotation_schema.items():
-            st.subheader(subsection)
-            for annotation_option, config in annotations.items():
-                if config['type'] == 'checkbox':
-                    annotated = st.checkbox(annotation_option, value=bool(data.at[index, annotation_option]) if pd.notna(data.at[index, annotation_option]) else False, key=f'{index}_{annotation_option}', help=config['tooltip'])
-                    st.session_state.annotations[annotation_option] = 1 if annotated else 0
-                elif config['type'] == 'likert':
-                    default_value = 0  # Assuming 0 is within your scale and represents the default/unset state
-                    annotated = st.slider(annotation_option, 0, config['scale'], value=int(data.at[index, annotation_option]) if pd.notna(data.at[index, annotation_option]) else default_value, key=f'{index}_{annotation_option}', help=config['tooltip'], format="%d")
-                    st.session_state.annotations[annotation_option] = annotated
-                elif config['type'] == 'dropdown':
-                    options = [""] + config['options']  # Prepend an empty option to represent no selection
-                    current_value = data.at[index, annotation_option]
-                    if pd.isna(current_value) or current_value not in options:
-                        selected_index = 0
-                    else:
-                        selected_index = options.index(current_value)
-                    annotated = st.selectbox(annotation_option, options, index=selected_index, key=f'{index}_{annotation_option}', help=config['tooltip'])
-                    st.session_state.annotations[annotation_option] = annotated if annotated else None
+        st.markdown(f'<div style="height: 300px; overflow-y: scroll; border: 1px solid #ced4da; border-radius: 4px; padding: 10px;">{current_text}</div>', unsafe_allow_html=True)
 
     # Navigation controls and download button are now placed in a narrower right column
     with right_column:
@@ -149,6 +125,31 @@ def annotation_page():
                 st.session_state.page = 'landing'
                 st.session_state.prepare_return = False
                 st.rerun()
+
+    # Initialize or update annotation states for the current index
+    if 'annotations' not in st.session_state:
+        st.session_state.annotations = {}
+
+    for subsection, annotations in annotation_schema.items():
+        st.subheader(subsection)
+        for annotation_option, config in annotations.items():
+            if config['type'] == 'checkbox':
+                annotated = st.checkbox(annotation_option, value=bool(data.at[index, annotation_option]) if pd.notna(data.at[index, annotation_option]) else False, key=f'{index}_{annotation_option}', help=config['tooltip'])
+                st.session_state.annotations[annotation_option] = 1 if annotated else 0
+            elif config['type'] == 'likert':
+                default_value = 0  # Assuming 0 is within your scale and represents the default/unset state
+                annotated = st.slider(annotation_option, 0, config['scale'], value=int(data.at[index, annotation_option]) if pd.notna(data.at[index, annotation_option]) else default_value, key=f'{index}_{annotation_option}', help=config['tooltip'], format="%d")
+                st.session_state.annotations[annotation_option] = annotated
+            elif config['type'] == 'dropdown':
+                options = [""] + config['options']  # Prepend an empty option to represent no selection
+                current_value = data.at[index, annotation_option]
+                if pd.isna(current_value) or current_value not in options:
+                    selected_index = 0
+                else:
+                    selected_index = options.index(current_value)
+                annotated = st.selectbox(annotation_option, options, index=selected_index, key=f'{index}_{annotation_option}', help=config['tooltip'])
+                st.session_state.annotations[annotation_option] = annotated if annotated else None
+
 
 
 def landing_page():
