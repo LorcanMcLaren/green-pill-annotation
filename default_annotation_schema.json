@@ -1,18 +1,22 @@
 {
-    "Content Analysis": {
+    "section_1": {
+        "section_name": "Content Analysis",
         "section_instruction": "Evaluate the text based on the following criteria and make your selections.",
         "annotations": {
-            "Relevance": {
+            "annotation_1": {
+                "name": "Relevance",
                 "type": "checkbox",
                 "tooltip": "Check if the text is relevant to the topic of interest.",
                 "example": "Relevant: 'The paragraph discusses the topic directly.' <br>Irrelevant: 'The text strays off-topic and provides no useful information.'"
             }
         }
     },
-    "Quality Assessment": {
+    "section_2": {
+        "section_name": "Quality Assessment",
         "section_instruction": "Assess the quality of the text.",
         "annotations": {
-            "Clarity": {
+            "annotation_1": {
+                "name": "Clarity",
                 "type": "likert",
                 "tooltip": "Rate the clarity of the text on a scale from 1 to 5.",
                 "scale": 5,
@@ -20,10 +24,12 @@
             }
         }
     },
-    "Categorization": {
+    "section_3": {
+        "section_name": "Categorization",
         "section_instruction": "Categorize the text based on the predefined categories.",
         "annotations": {
-            "Category": {
+            "annotation_1": {
+                "name": "Category",
                 "type": "dropdown",
                 "tooltip": "Select the most appropriate category for the text.",
                 "options": ["Category 1", "Category 2", "Category 3"],
