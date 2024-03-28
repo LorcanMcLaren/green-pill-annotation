@@ -3,6 +3,30 @@ import pandas as pd
 import base64
 import json
 
+def render_header():
+    header = """
+        <style>
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #0E1117;
+            padding: 30px 0 0 20px;
+            text-align: left;
+            z-index: 1000;
+        }
+        .content {
+            margin-top: 60px;
+        }
+        </style>
+
+        <div class="header">
+            <h2>The Green Pill Project 🧪</h2>
+        </div>
+    """
+    st.markdown(header, unsafe_allow_html=True)
+
 def process_data(uploaded_file, text_column):
     uploaded_file.seek(0)  # Reset file pointer
     df = pd.read_csv(uploaded_file)
@@ -25,7 +49,7 @@ def download_link(object_to_download, download_filename, download_link_text):
     return f'<a href="data:file/csv;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
 
 def annotation_page():
-    st.title("The Green Pill Project 🧪")
+    render_header()
 
     if 'index' not in st.session_state or 'data' not in st.session_state or st.session_state.data is None:
         st.warning("Please upload a CSV file to start annotating.")
@@ -121,8 +145,9 @@ def annotation_page():
                 st.rerun()
 
 def landing_page():
-    st.title("The Green Pill Project 🧪")
-    st.write("Instructions: Upload your CSV file containing the texts to be annotated. You can also choose to upload your own annotation schema in JSON format.")
+    render_header()
+    st.header("Instructions")
+    st.write("Upload your CSV file containing the texts to be annotated. You can also choose to upload your own annotation schema in JSON format.")
     
     # File uploader for the CSV file
     uploaded_file = st.file_uploader("Choose a text CSV file", type=['csv'], key="csv_uploader")
@@ -163,11 +188,12 @@ def landing_page():
             st.rerun()
 
 def schema_creation_page():
-    st.title("Create Your Annotation Schema")
+    render_header()
+    st.header("Create Your Annotation Schema")
     st.subheader("Instructions")
     st.write("This is where the instructions will go.")
     st.divider()
-    
+
     # Initialize or update the session state for schema creation
     if 'custom_schema' not in st.session_state:
         st.session_state.custom_schema = {"section_1": {"section_name": "", "section_instruction": "", "annotations": {}}}
@@ -213,7 +239,7 @@ def schema_creation_page():
             # Iterate through annotations for this section based on the count
             for ann_idx in range(st.session_state.annotations_count[section_key]):
                 ann_key = f"annotation_{ann_idx + 1}"  # Start annotation naming from 1 for readability
-                with st.popover(f"Annotation {ann_idx + 1} Configuration"):
+                with st.popover(f"Configure annotation {ann_idx + 1}"):
                     # Initialize annotation in the schema if it doesn't exist
                     if ann_key not in section["annotations"]:
                         section["annotations"][ann_key] = {"name": "", "type": "checkbox", "tooltip": "", "example": ""}
@@ -231,7 +257,7 @@ def schema_creation_page():
                         options_str = st.text_area("Options (comma-separated)", key=f"{section_key}_{ann_key}_options")
                         annotation["options"] = [option.strip() for option in options_str.split(',') if option.strip()]
                 
-                st.caption(f"Render")
+                st.caption(f"Rendering of annotation {ann_idx + 1}")
                 render_annotation(annotation, key = f"{section_key}_{ann_key}_render")
 
 
@@ -281,5 +307,36 @@ elif st.session_state.page == 'annotate':
     st.set_page_config(layout="wide")
     annotation_page()
 elif st.session_state.page == 'create_schema':
-    st.set_page_config(layout="wide")
+    st.set_page_config(layout="centered")
     schema_creation_page()
+
+# Add a footer
+footer = """<style>
+a:link , a:visited{
+color: grey;
+background-color: transparent;
+text-decoration: underline;
+}
+
+a:hover,  a:active {
+color: grey;
+background-color: transparent;
+text-decoration: underline;
+}
+
+.footer {
+position: fixed;
+left: 0;
+bottom: 0;
+width: 100%;
+# background-color: white;
+color: grey;
+text-align: right;
+padding-right: 30px;
+}
+</style>
+<div class="footer">
+<p>Developed by <a href="https://www.lorcanmclaren.com" target="_blank">Lorcan McLaren</a></p>
+</div>
+"""
+st.markdown(footer, unsafe_allow_html=True)
