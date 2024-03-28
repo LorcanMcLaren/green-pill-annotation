@@ -56,10 +56,10 @@ def annotation_page():
         if 'annotations' not in st.session_state:
             st.session_state.annotations = {}
 
-        for section, content in st.session_state.annotation_schema.items():
+        for _, content in st.session_state.annotation_schema.items():
             st.subheader(content['section_name'])
             st.write(content["section_instruction"])
-            for annotation_option, config in content["annotations"].items():
+            for _, config in content["annotations"].items():
                 full_column_name = f"{content['section_name']}_{config['name']}"
                 if config['type'] == 'checkbox':
                     annotated = st.checkbox(config['name'], value=bool(data.at[index, full_column_name]) if pd.notna(data.at[index, full_column_name]) else False, key=f'{index}_{full_column_name}', help=config['tooltip'])
@@ -164,7 +164,10 @@ def landing_page():
 
 def schema_creation_page():
     st.title("Create Your Annotation Schema")
-
+    st.subheader("Instructions")
+    st.write("This is where the instructions will go.")
+    st.divider()
+    
     # Initialize or update the session state for schema creation
     if 'custom_schema' not in st.session_state:
         st.session_state.custom_schema = {"section_1": {"section_name": "", "section_instruction": "", "annotations": {}}}
@@ -184,6 +187,19 @@ def schema_creation_page():
         st.session_state.annotations_count[section_key] += 1
         st.rerun()
 
+    def render_annotation(annotation, key):
+        if annotation['type'] == 'checkbox':
+            st.checkbox(annotation['name'], help=annotation['tooltip'], key = key)
+        elif annotation['type'] == 'likert':
+            default_value = 0
+            st.slider(annotation['name'], 0, annotation['scale'], value= default_value, help=annotation['tooltip'], format="%d", key = key)
+        elif annotation['type'] == 'dropdown':
+            options = [""] + annotation['options']
+            st.selectbox(annotation['name'], options, index=0, help=annotation['tooltip'], key = key)
+        if annotation['example']:
+            with st.expander(f"See examples for {annotation['name']}"):
+                st.write(annotation['example'], unsafe_allow_html=True)
+
     # Iterate through sections to display them
     for section_key in st.session_state.custom_schema.keys():
         section = st.session_state.custom_schema[section_key]
@@ -197,7 +213,7 @@ def schema_creation_page():
             # Iterate through annotations for this section based on the count
             for ann_idx in range(st.session_state.annotations_count[section_key]):
                 ann_key = f"annotation_{ann_idx + 1}"  # Start annotation naming from 1 for readability
-                with st.expander(f"{section_title} - Annotation {ann_idx + 1}", expanded = True):
+                with st.popover(f"Annotation {ann_idx + 1} Configuration"):
                     # Initialize annotation in the schema if it doesn't exist
                     if ann_key not in section["annotations"]:
                         section["annotations"][ann_key] = {"name": "", "type": "checkbox", "tooltip": "", "example": ""}
@@ -214,16 +230,21 @@ def schema_creation_page():
                     elif annotation["type"] == "dropdown":
                         options_str = st.text_area("Options (comma-separated)", key=f"{section_key}_{ann_key}_options")
                         annotation["options"] = [option.strip() for option in options_str.split(',') if option.strip()]
+                
+                st.caption(f"Render")
+                render_annotation(annotation, key = f"{section_key}_{ann_key}_render")
 
 
             # Button to add a new annotation within this section
             if st.button("Add Annotation", key=f"add_annotation_{section_key}"):
                 add_annotation(section_key)
+            st.divider()
 
     # Button to add a new section, placed at the end outside of the sections' loop
     if st.button("Add New Section"):
         add_section()
 
+    st.divider()
     # Display the current schema for debugging purposes
     st.write("Current Schema:")
     st.json(st.session_state.custom_schema)
