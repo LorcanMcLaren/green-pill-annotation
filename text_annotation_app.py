@@ -11,7 +11,7 @@ def render_header():
             top: 0;
             left: 0;
             right: 0;
-            background-color: #0E1117;
+            background-color: black;
             padding: 30px 0 0 20px;
             text-align: left;
             z-index: 1000;
@@ -147,35 +147,35 @@ def annotation_page():
 def landing_page():
     render_header()
     st.header("Instructions")
-    st.write("Upload your CSV file containing the texts to be annotated. You can also choose to upload your own annotation schema in JSON format.")
+    st.write("""Upload your CSV file containing the texts to be annotated. You will be prompted to choose the CSV column that contains """)
     
     # File uploader for the CSV file
     uploaded_file = st.file_uploader("Choose a text CSV file", type=['csv'], key="csv_uploader")
-
-    # Load default annotation schema if available and no custom schema has been uploaded yet
-    if 'annotation_schema' not in st.session_state:
-        st.session_state.annotation_schema = {}  # Use an empty schema if default is not found
-
-    # File uploader for the annotation schema JSON file
-    schema_file = st.file_uploader("Optionally, upload your own annotation schema", type=['json'], key="json_uploader")
-
-    # Load the uploaded annotation schema
-    if schema_file is not None:
-        st.session_state.annotation_schema = json.load(schema_file)
 
     # Check if a CSV file has been uploaded and if an annotation schema is present
     if uploaded_file is not None:
         temp_df = pd.read_csv(uploaded_file)
         column_names = temp_df.columns.tolist()
 
+        selected_title_column = st.selectbox("Select the column to use as header:", column_names, key="title_column_selector")
+        st.session_state.title_column = selected_title_column
+
         selected_text_column = st.selectbox("Select the column to annotate:", column_names, key="text_column_selector")
         st.session_state.text_column = selected_text_column
 
-        selected_title_column = st.selectbox("Select the column containing the debate title:", column_names, key="title_column_selector")
-        st.session_state.title_column = selected_title_column
-
         st.session_state.uploaded_file = uploaded_file
         st.session_state.index = 1
+
+        # Load default annotation schema if available and no custom schema has been uploaded yet
+        if 'annotation_schema' not in st.session_state:
+            st.session_state.annotation_schema = {}  # Use an empty schema if default is not found
+
+        # File uploader for the annotation schema JSON file
+        schema_file = st.file_uploader("Optionally, upload your own annotation schema", type=['json'], key="json_uploader")
+
+        # Load the uploaded annotation schema
+        if schema_file is not None:
+            st.session_state.annotation_schema = json.load(schema_file)
 
         if st.button("Start Annotating"):
             # Check if the annotation schema is empty before proceeding to annotation
