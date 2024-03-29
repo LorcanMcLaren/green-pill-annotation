@@ -300,14 +300,17 @@ def update_index(new_index):
 if 'page' not in st.session_state:
     st.session_state.page = 'landing'
 
+page_title = "Green Pill"
+page_icon = "🧪"
+
 if st.session_state.page == 'landing':
-    st.set_page_config(layout="centered")
+    st.set_page_config(page_title=page_title, page_icon=page_icon, layout="centered")
     landing_page()
 elif st.session_state.page == 'annotate':
-    st.set_page_config(layout="wide")
+    st.set_page_config(page_title=page_title, page_icon=page_icon, layout="wide")
     annotation_page()
 elif st.session_state.page == 'create_schema':
-    st.set_page_config(layout="centered")
+    st.set_page_config(page_title=page_title, page_icon=page_icon,layout="centered")
     schema_creation_page()
 
 # Add a footer
