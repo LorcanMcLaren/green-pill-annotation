@@ -335,7 +335,7 @@ width: 100%;
 # background-color: white;
 color: grey;
 text-align: right;
-padding-right: 30px;
+padding-right: 100px;
 }
 </style>
 <div class="footer">
