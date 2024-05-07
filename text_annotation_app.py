@@ -150,7 +150,7 @@ def annotation_page():
 def landing_page():
     render_header()
     st.header("Instructions")
-    st.write("""Upload your CSV file containing the texts to be annotated. You will be prompted to choose the CSV column that contains """)
+    st.write("""Upload your CSV file containing the texts to be annotated.""")
     
     # File uploader for the CSV file
     uploaded_file = st.file_uploader("Choose a text CSV file", type=['csv'], key="csv_uploader")
