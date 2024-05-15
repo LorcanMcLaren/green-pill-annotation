@@ -43,6 +43,15 @@ def process_data(uploaded_file, text_column):
 
     return df
 
+def find_last_annotated_row(data, custom_schema):
+    for i in range(len(data) - 1, -1, -1):
+        for key, content in custom_schema.items():
+            if "section" in key:
+                for _, config in content["annotations"].items():
+                    full_column_name = f"{content['section_name']}_{config['name']}"
+                    if pd.notna(data.at[i, full_column_name]):
+                        return i + 1
+    return 0
 
 def annotation_page():
     render_header()
@@ -180,11 +189,14 @@ def landing_page():
             # Check if the annotation schema is empty before proceeding to annotation
             if st.session_state.custom_schema:
                 st.session_state.data = process_data(st.session_state.uploaded_file, st.session_state.custom_schema["text_column"])
+                last_annotated_row = find_last_annotated_row(st.session_state.data, st.session_state.custom_schema)
+                st.session_state.index = last_annotated_row + 1 if last_annotated_row < len(st.session_state.data) else len(st.session_state.data)
                 st.session_state.page = 'annotate'
             else:
                 # Redirect to schema creation page if no schema is present
                 st.session_state.page = 'create_schema'
             st.rerun()
+
 
 def schema_creation_page():
     render_header()
