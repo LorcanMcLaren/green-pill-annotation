@@ -93,7 +93,9 @@ def annotation_page():
                         st.session_state.annotations[full_column_name] = 1 if annotated else 0
                     elif config['type'] == 'likert':
                         default_value = 0
-                        annotated = st.slider(config['name'], 0, config['scale'], value=int(data.at[index, full_column_name]) if pd.notna(data.at[index, full_column_name]) else default_value, key=f'{index}_{full_column_name}', help=config['tooltip'], format="%d")
+                        min_value = config.get('min_value', 0)
+                        max_value = config.get('max_value', config['scale'])
+                        annotated = st.slider(config['name'], min_value, max_value, value=int(data.at[index, full_column_name]) if pd.notna(data.at[index, full_column_name]) else default_value, key=f'{index}_{full_column_name}', help=config['tooltip'], format="%d")
                         st.session_state.annotations[full_column_name] = annotated
                     elif config['type'] == 'dropdown':
                         options = [""] + config['options']
@@ -227,16 +229,19 @@ def schema_creation_page():
         st.rerun()
 
     def render_annotation(annotation, key):
+        label = annotation['name'] if annotation['name'] else ""
         if annotation['type'] == 'checkbox':
-            st.checkbox(annotation['name'], help=annotation['tooltip'], key = key)
+            st.checkbox(label, help=annotation['tooltip'], key=key)
         elif annotation['type'] == 'likert':
             default_value = 0
-            st.slider(annotation['name'], 0, annotation['scale'], value= default_value, help=annotation['tooltip'], format="%d", key = key)
+            min_value = annotation.get('min_value', 0)
+            max_value = annotation.get('max_value', annotation['scale'])
+            st.slider(label, min_value, max_value, value=default_value, help=annotation['tooltip'], format="%d", key=key)
         elif annotation['type'] == 'dropdown':
             options = [""] + annotation['options']
-            st.selectbox(annotation['name'], options, index=0, help=annotation['tooltip'], key = key)
+            st.selectbox(label, options, index=0, help=annotation['tooltip'], key=key)
         elif annotation['type'] == 'textbox':
-            st.text_input(annotation['name'], help=annotation['tooltip'], key=key)
+            st.text_input(label, help=annotation['tooltip'], key=key)
         if annotation['example']:
             with st.expander(f"See examples for {annotation['name']}"):
                 st.write(annotation['example'], unsafe_allow_html=True)
@@ -268,7 +273,9 @@ def schema_creation_page():
                         annotation["example"] = st.text_area("Example", key=f"{section_key}_{ann_key}_example", value=annotation.get("example", ""))
 
                         if annotation["type"] == "likert":
-                            annotation["scale"] = st.number_input("Scale", min_value=2, max_value=1000, value=5, key=f"{section_key}_{ann_key}_scale")
+                            annotation["min_value"] = st.number_input("Minimum Value", value=0, key=f"{section_key}_{ann_key}_min_value")
+                            annotation["max_value"] = st.number_input("Maximum Value", value=5, key=f"{section_key}_{ann_key}_max_value")
+                            annotation["scale"] = annotation["max_value"]
                         elif annotation["type"] == "dropdown":
                             options_str = st.text_area("Options (comma-separated)", key=f"{section_key}_{ann_key}_options")
                             annotation["options"] = [option.strip() for option in options_str.split(',') if option.strip()]
@@ -326,6 +333,7 @@ elif st.session_state.page == 'annotate':
 elif st.session_state.page == 'create_schema':
     st.set_page_config(page_title=page_title, page_icon=page_icon,layout="centered")
     schema_creation_page()
+
 
 # Add a footer
 footer = """<style>
