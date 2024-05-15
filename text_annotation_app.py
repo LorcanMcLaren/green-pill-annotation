@@ -112,7 +112,7 @@ def annotation_page():
                         st.session_state.annotations[full_column_name] = annotated if annotated else None
                     elif config['type'] == 'textbox':
                         default_text = '' if pd.isna(data.at[index, full_column_name]) else data.at[index, full_column_name]
-                        annotated = st.text_input(config['name'], value=default_text, key=f'{index}_{full_column_name}', help=config['tooltip'])
+                        annotated = st.text_area(config['name'], value=default_text, key=f'{index}_{full_column_name}', help=config['tooltip'])
                         st.session_state.annotations[full_column_name] = annotated
                     if config['example']:
                         with st.expander(f"See examples for {config['name']}"):
@@ -249,7 +249,7 @@ def schema_creation_page():
             options = [""] + annotation['options']
             st.selectbox(label, options, index=0, help=annotation['tooltip'], key=key)
         elif annotation['type'] == 'textbox':
-            st.text_input(label, help=annotation['tooltip'], key=key)
+            st.text_area(label, help=annotation['tooltip'], key=key)
         if annotation['example']:
             with st.expander(f"See examples for {annotation['name']}"):
                 st.write(annotation['example'], unsafe_allow_html=True)
