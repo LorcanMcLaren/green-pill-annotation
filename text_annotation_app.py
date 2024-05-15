@@ -104,6 +104,10 @@ def annotation_page():
                             selected_index = options.index(current_value)
                         annotated = st.selectbox(config['name'], options, index=selected_index, key=f'{index}_{full_column_name}', help=config['tooltip'])
                         st.session_state.annotations[full_column_name] = annotated if annotated else None
+                    elif config['type'] == 'textbox':
+                        default_text = '' if pd.isna(data.at[index, full_column_name]) else data.at[index, full_column_name]
+                        annotated = st.text_input(config['name'], value=default_text, key=f'{index}_{full_column_name}', help=config['tooltip'])
+                        st.session_state.annotations[full_column_name] = annotated
                     if config['example']:
                         with st.expander(f"See examples for {config['name']}"):
                             st.write(config['example'], unsafe_allow_html=True)
@@ -231,6 +235,8 @@ def schema_creation_page():
         elif annotation['type'] == 'dropdown':
             options = [""] + annotation['options']
             st.selectbox(annotation['name'], options, index=0, help=annotation['tooltip'], key = key)
+        elif annotation['type'] == 'textbox':
+            st.text_input(annotation['name'], help=annotation['tooltip'], key=key)
         if annotation['example']:
             with st.expander(f"See examples for {annotation['name']}"):
                 st.write(annotation['example'], unsafe_allow_html=True)
@@ -257,7 +263,7 @@ def schema_creation_page():
                         # Update annotation details directly in custom_schema
                         annotation = section["annotations"][ann_key]
                         annotation["name"] = st.text_input("Annotation Name", key=f"{section_key}_{ann_key}_name", value=annotation.get("name", ""))
-                        annotation["type"] = st.selectbox("Annotation Type", ["checkbox", "likert", "dropdown"], key=f"{section_key}_{ann_key}_type", index=["checkbox", "likert", "dropdown"].index(annotation.get("type", "checkbox")))
+                        annotation["type"] = st.selectbox("Annotation Type", ["checkbox", "likert", "dropdown", "textbox"], key=f"{section_key}_{ann_key}_type", index=["checkbox", "likert", "dropdown", "textbox"].index(annotation.get("type", "checkbox")))
                         annotation["tooltip"] = st.text_area("Tooltip", key=f"{section_key}_{ann_key}_tooltip", value=annotation.get("tooltip", ""))
                         annotation["example"] = st.text_area("Example", key=f"{section_key}_{ann_key}_example", value=annotation.get("example", ""))
 
