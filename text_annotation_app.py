@@ -43,11 +43,6 @@ def process_data(uploaded_file, text_column):
 
     return df
 
-def download_link(object_to_download, download_filename, download_link_text):
-    if isinstance(object_to_download, pd.DataFrame):
-        object_to_download = object_to_download.to_csv(index=False)
-    b64 = base64.b64encode(object_to_download.encode()).decode()
-    return f'<a href="data:file/csv;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
 
 def annotation_page():
     render_header()
@@ -133,11 +128,12 @@ def annotation_page():
             update_data(index, data)
             update_index(new_index)
 
-        if st.button("Download Annotated CSV"):
-            st.session_state.prepare_return = False
-            update_data(index, data)
-            tmp_download_link = download_link(data, 'annotated_data.csv', 'Click here to download your annotated CSV')
-            st.markdown(tmp_download_link, unsafe_allow_html=True)
+        if st.session_state.data is not None:
+            csv_data = st.session_state.data.copy()  # Create a copy to update only when needed
+            update_data(index, csv_data)  # Update the data copy
+            csv = csv_data.to_csv(index=False).encode('utf-8')
+            st.download_button(label="Download Annotated CSV", data=csv, file_name='annotated_data.csv', mime='text/csv')
+
 
         if st.button("Annotate New Data"):
             st.session_state.prepare_return = True
@@ -298,11 +294,9 @@ def schema_creation_page():
     st.json(st.session_state.custom_schema)
 
     # Option to download the current schema as JSON
-    if st.button("Download Schema as JSON"):
-        schema_str = json.dumps(st.session_state.custom_schema, indent=4)
-        b64 = base64.b64encode(schema_str.encode()).decode()
-        href = f'<a href="data:text/json;base64,{b64}" download="custom_annotation_schema.json">Download JSON File</a>'
-        st.markdown(href, unsafe_allow_html=True)
+    schema_str = json.dumps(st.session_state.custom_schema, indent=4)
+    st.download_button(label="Download Schema as JSON", data=schema_str, file_name='custom_annotation_schema.json', mime='application/json')
+
 
     # Option to use the current schema for annotation
     if st.button("Use This Schema for Annotation"):
