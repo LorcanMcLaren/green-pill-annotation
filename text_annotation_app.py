@@ -247,9 +247,18 @@ def schema_creation_page():
         st.session_state.annotations_count[new_section_key] = 0  # Initialize with 0 annotations
         st.rerun()
 
-    # Function to add a new annotation within a section
+    def delete_section(section_key):
+        del st.session_state.custom_schema[section_key]
+        st.session_state.annotations_count.pop(section_key, None)
+        st.rerun()
+
     def add_annotation(section_key):
         st.session_state.annotations_count[section_key] += 1
+        st.rerun()
+
+    def delete_annotation(section_key, annotation_key):
+        del st.session_state.custom_schema[section_key]['annotations'][annotation_key]
+        st.session_state.annotations_count[section_key] -= 1
         st.rerun()
 
     def render_annotation(annotation, key):
@@ -275,29 +284,40 @@ def schema_creation_page():
             section = st.session_state.custom_schema[section_key]
             section_title = "Section " + section_key.split('section_')[1]
             with st.container():
-                st.subheader(section_title)
+                left_column, right_column = st.columns([0.8, 0.2])
+                with left_column:
+                    st.subheader(section_title)
+                with right_column:
+                    if st.button("Delete Section", key=f"delete_section_{section_key}"):
+                        delete_section(section_key)
                 section["section_name"] = st.text_input("Section Name", key=f"{section_key}_name", value=section.get("section_name", ""))
                 section["section_instruction"] = st.text_area("Section Instructions", key=f"{section_key}_instructions", value=section.get("section_instruction", ""))
 
+
                 for ann_idx in range(st.session_state.annotations_count.get(section_key, 0)):
                     ann_key = f"annotation_{ann_idx + 1}"
-                    with st.expander(f"Configure annotation {ann_idx + 1}"):
-                        if ann_key not in section["annotations"]:
-                            section["annotations"][ann_key] = {"name": "", "type": "checkbox", "tooltip": "", "example": ""}
+                    left_column, right_column = st.columns([0.8, 0.25])
+                    with left_column:
+                        with st.expander(f"Configure annotation {ann_idx + 1}"):
+                            if ann_key not in section["annotations"]:
+                                section["annotations"][ann_key] = {"name": "", "type": "checkbox", "tooltip": "", "example": ""}
 
-                        annotation = section["annotations"][ann_key]
-                        annotation["name"] = st.text_input("Annotation Name", key=f"{section_key}_{ann_key}_name", value=annotation.get("name", ""))
-                        annotation["type"] = st.selectbox("Annotation Type", ["checkbox", "likert", "dropdown", "textbox"], key=f"{section_key}_{ann_key}_type", index=["checkbox", "likert", "dropdown", "textbox"].index(annotation.get("type", "checkbox")))
-                        annotation["tooltip"] = st.text_area("Tooltip", key=f"{section_key}_{ann_key}_tooltip", value=annotation.get("tooltip", ""))
-                        annotation["example"] = st.text_area("Example", key=f"{section_key}_{ann_key}_example", value=annotation.get("example", ""))
+                            annotation = section["annotations"][ann_key]
+                            annotation["name"] = st.text_input("Annotation Name", key=f"{section_key}_{ann_key}_name", value=annotation.get("name", ""))
+                            annotation["type"] = st.selectbox("Annotation Type", ["checkbox", "likert", "dropdown", "textbox"], key=f"{section_key}_{ann_key}_type", index=["checkbox", "likert", "dropdown", "textbox"].index(annotation.get("type", "checkbox")))
+                            annotation["tooltip"] = st.text_area("Tooltip", key=f"{section_key}_{ann_key}_tooltip", value=annotation.get("tooltip", ""))
+                            annotation["example"] = st.text_area("Example", key=f"{section_key}_{ann_key}_example", value=annotation.get("example", ""))
 
-                        if annotation["type"] == "likert":
-                            annotation["min_value"] = st.number_input("Minimum Value", value=annotation.get("min_value", 0), key=f"{section_key}_{ann_key}_min_value")
-                            annotation["max_value"] = st.number_input("Maximum Value", value=annotation.get("max_value", annotation['scale']), key=f"{section_key}_{ann_key}_max_value")
-                        elif annotation["type"] == "dropdown":
-                            options_str = st.text_area("Options (comma-separated)", key=f"{section_key}_{ann_key}_options", value=", ".join(annotation.get("options", [])))
-                            annotation["options"] = [option.strip() for option in options_str.split(',') if option.strip()]
-                    
+                            if annotation["type"] == "likert":
+                                annotation["min_value"] = st.number_input("Minimum Value", value=annotation.get("min_value", 0), key=f"{section_key}_{ann_key}_min_value")
+                                annotation["max_value"] = st.number_input("Maximum Value", value=annotation.get("max_value", annotation['scale']), key=f"{section_key}_{ann_key}_max_value")
+                            elif annotation["type"] == "dropdown":
+                                options_str = st.text_area("Options (comma-separated)", key=f"{section_key}_{ann_key}_options", value=", ".join(annotation.get("options", [])))
+                                annotation["options"] = [option.strip() for option in options_str.split(',') if option.strip()]
+                    with right_column:
+                        if st.button("Delete Annotation", key=f"delete_annotation_{section_key}_{ann_key}"):
+                            delete_annotation(section_key, ann_key)
+
                     st.caption(f"Rendering of annotation {ann_idx + 1}")
                     render_annotation(annotation, key=f"{section_key}_{ann_key}_render")
 
