@@ -12,7 +12,7 @@ def render_header():
             left: 0;
             right: 0;
             background-color: black;
-            padding: 30px 0 0 20px;
+            padding: 40px 0 0 20px;
             text-align: left;
             z-index: 1000;
         }
@@ -28,11 +28,14 @@ def render_header():
     st.markdown(header, unsafe_allow_html=True)
 
 def process_data(uploaded_file, text_column):
-    uploaded_file.seek(0)  # Reset file pointer
-    df = pd.read_csv(uploaded_file)
+    if 'data' not in st.session_state or st.session_state.data is None:
+        uploaded_file.seek(0)  # Reset file pointer
+        df = pd.read_csv(uploaded_file)
 
-    if text_column not in df.columns:
-        raise ValueError(f"Selected column '{text_column}' not found in the uploaded file.")
+        if text_column not in df.columns:
+            raise ValueError(f"Selected column '{text_column}' not found in the uploaded file.")
+    else:
+        df = st.session_state.data
 
     for section_key, section_content in st.session_state.custom_schema.items():
         if "section" in section_key:
@@ -122,18 +125,15 @@ def annotation_page():
         st.markdown("### Navigation Controls")
 
         if st.button("Next") and index < len(data) - 1:
-            st.session_state.prepare_return = False
             update_data(index, data)
             update_index(index + 2)
 
         if st.button("Previous") and index > 0:
-            st.session_state.prepare_return = False
             update_data(index, data)
             update_index(index)
 
         new_index = st.slider("Go to Item", 1, len(data), index + 1, format="%d")
         if new_index != index + 1:
-            st.session_state.prepare_return = False
             update_data(index, data)
             update_index(new_index)
 
@@ -143,9 +143,20 @@ def annotation_page():
             csv = csv_data.to_csv(index=False).encode('utf-8')
             st.download_button(label="Download Annotated CSV", data=csv, file_name='annotated_data.csv', mime='text/csv')
 
+        st.divider()
+        st.markdown("##### Options")
 
         if st.button("Annotate New Data"):
             st.session_state.prepare_return = True
+        
+        if st.button("Edit Annotation Schema"):
+            update_data(index, data)
+            st.session_state.data = data
+            st.session_state.page = 'create_schema'
+            st.rerun()
+
+        schema_str = json.dumps(st.session_state.custom_schema, indent=4)
+        st.download_button(label="Download Schema as JSON", data=schema_str, file_name='custom_annotation_schema.json', mime='application/json')
 
         if st.session_state.get('prepare_return', False):
             st.warning("Warning: Annotations that have not been downloaded will not be saved.")
@@ -205,9 +216,11 @@ def schema_creation_page():
     st.write("This is where the instructions will go.")
     st.divider()
 
-    header_column = st.selectbox("Select the header column:", st.session_state.column_names, key="header_column_selector")
-    text_column = st.selectbox("Select the text column to annotate:", st.session_state.column_names, key="text_column_selector")
-    
+    header_column_default = st.session_state.custom_schema.get("header_column", "")
+    text_column_default = st.session_state.custom_schema.get("text_column", "")
+    header_column = st.selectbox("Select the header column:", st.session_state.column_names, index=st.session_state.column_names.index(header_column_default) if header_column_default in st.session_state.column_names else 0, key="header_column_selector")
+    text_column = st.selectbox("Select the text column to annotate:", st.session_state.column_names, index=st.session_state.column_names.index(text_column_default) if text_column_default in st.session_state.column_names else 0, key="text_column_selector")
+        
     # Initialize or update the session state for schema creation
     if not st.session_state.custom_schema:
         # Add these lines at an appropriate place in schema_creation_page()
@@ -217,7 +230,10 @@ def schema_creation_page():
             "section_1": {"section_name": "", "section_instruction": "", "annotations": {}}}
     
     if 'annotations_count' not in st.session_state:
-        st.session_state.annotations_count = {"section_1": 0}
+        st.session_state.annotations_count = {}
+        for section_key, section_value in st.session_state.custom_schema.items():
+            if "section" in section_key:
+                st.session_state.annotations_count[section_key] = len(section_value["annotations"])
 
     # Store the selected columns in custom_schema
     if st.session_state.custom_schema:
@@ -254,26 +270,21 @@ def schema_creation_page():
             with st.expander(f"See examples for {annotation['name']}"):
                 st.write(annotation['example'], unsafe_allow_html=True)
 
-    # Iterate through sections to display them
     for section_key in st.session_state.custom_schema.keys():
         if "section" in section_key:
             section = st.session_state.custom_schema[section_key]
             section_title = "Section " + section_key.split('section_')[1]
             with st.container():
                 st.subheader(section_title)
-                # Update section name and instructions directly in custom_schema
                 section["section_name"] = st.text_input("Section Name", key=f"{section_key}_name", value=section.get("section_name", ""))
                 section["section_instruction"] = st.text_area("Section Instructions", key=f"{section_key}_instructions", value=section.get("section_instruction", ""))
 
-                # Iterate through annotations for this section based on the count
-                for ann_idx in range(st.session_state.annotations_count[section_key]):
-                    ann_key = f"annotation_{ann_idx + 1}"  # Start annotation naming from 1 for readability
-                    with st.popover(f"Configure annotation {ann_idx + 1}"):
-                        # Initialize annotation in the schema if it doesn't exist
+                for ann_idx in range(st.session_state.annotations_count.get(section_key, 0)):
+                    ann_key = f"annotation_{ann_idx + 1}"
+                    with st.expander(f"Configure annotation {ann_idx + 1}"):
                         if ann_key not in section["annotations"]:
                             section["annotations"][ann_key] = {"name": "", "type": "checkbox", "tooltip": "", "example": ""}
 
-                        # Update annotation details directly in custom_schema
                         annotation = section["annotations"][ann_key]
                         annotation["name"] = st.text_input("Annotation Name", key=f"{section_key}_{ann_key}_name", value=annotation.get("name", ""))
                         annotation["type"] = st.selectbox("Annotation Type", ["checkbox", "likert", "dropdown", "textbox"], key=f"{section_key}_{ann_key}_type", index=["checkbox", "likert", "dropdown", "textbox"].index(annotation.get("type", "checkbox")))
@@ -281,40 +292,34 @@ def schema_creation_page():
                         annotation["example"] = st.text_area("Example", key=f"{section_key}_{ann_key}_example", value=annotation.get("example", ""))
 
                         if annotation["type"] == "likert":
-                            annotation["min_value"] = st.number_input("Minimum Value", value=0, key=f"{section_key}_{ann_key}_min_value")
-                            annotation["max_value"] = st.number_input("Maximum Value", value=5, key=f"{section_key}_{ann_key}_max_value")
-                            annotation["scale"] = annotation["max_value"]
+                            annotation["min_value"] = st.number_input("Minimum Value", value=annotation.get("min_value", 0), key=f"{section_key}_{ann_key}_min_value")
+                            annotation["max_value"] = st.number_input("Maximum Value", value=annotation.get("max_value", annotation['scale']), key=f"{section_key}_{ann_key}_max_value")
                         elif annotation["type"] == "dropdown":
-                            options_str = st.text_area("Options (comma-separated)", key=f"{section_key}_{ann_key}_options")
+                            options_str = st.text_area("Options (comma-separated)", key=f"{section_key}_{ann_key}_options", value=", ".join(annotation.get("options", [])))
                             annotation["options"] = [option.strip() for option in options_str.split(',') if option.strip()]
                     
                     st.caption(f"Rendering of annotation {ann_idx + 1}")
-                    render_annotation(annotation, key = f"{section_key}_{ann_key}_render")
+                    render_annotation(annotation, key=f"{section_key}_{ann_key}_render")
 
-                # Button to add a new annotation within this section
                 if st.button("Add Annotation", key=f"add_annotation_{section_key}"):
                     add_annotation(section_key)
                 st.divider()
 
-    # Button to add a new section, placed at the end outside of the sections' loop
     if st.button("Add New Section"):
         add_section()
 
     st.divider()
-    # Display the current schema for debugging purposes
     st.write("Current Schema:")
     st.json(st.session_state.custom_schema)
 
-    # Option to download the current schema as JSON
     schema_str = json.dumps(st.session_state.custom_schema, indent=4)
     st.download_button(label="Download Schema as JSON", data=schema_str, file_name='custom_annotation_schema.json', mime='application/json')
 
-
-    # Option to use the current schema for annotation
     if st.button("Use This Schema for Annotation"):
         st.session_state.data = process_data(st.session_state.uploaded_file, text_column)
         st.session_state.page = 'annotate'
         st.rerun()
+
 
 def update_data(index, data):
     for annotation_option in st.session_state.annotations:
