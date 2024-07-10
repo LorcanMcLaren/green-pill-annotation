@@ -268,7 +268,7 @@ def schema_creation_page():
         elif annotation['type'] == 'likert':
             default_value = 0
             min_value = annotation.get('min_value', 0)
-            max_value = annotation.get('max_value', annotation['scale'])
+            max_value = annotation.get('max_value', annotation.get('scale', 5))
             st.slider(label, min_value, max_value, value=default_value, help=annotation['tooltip'], format="%d", key=key)
         elif annotation['type'] == 'dropdown':
             options = [""] + annotation['options']
@@ -310,7 +310,7 @@ def schema_creation_page():
 
                             if annotation["type"] == "likert":
                                 annotation["min_value"] = st.number_input("Minimum Value", value=annotation.get("min_value", 0), key=f"{section_key}_{ann_key}_min_value")
-                                annotation["max_value"] = st.number_input("Maximum Value", value=annotation.get("max_value", annotation['scale']), key=f"{section_key}_{ann_key}_max_value")
+                                annotation["max_value"] = st.number_input("Maximum Value", value=annotation.get("max_value", annotation.get('scale', 5)), key=f"{section_key}_{ann_key}_max_value")
                             elif annotation["type"] == "dropdown":
                                 options_str = st.text_area("Options (comma-separated)", key=f"{section_key}_{ann_key}_options", value=", ".join(annotation.get("options", [])))
                                 annotation["options"] = [option.strip() for option in options_str.split(',') if option.strip()]
