@@ -271,7 +271,7 @@ def schema_creation_page():
             max_value = annotation.get('max_value', annotation.get('scale', 5))
             st.slider(label, min_value, max_value, value=default_value, help=annotation['tooltip'], format="%d", key=key)
         elif annotation['type'] == 'dropdown':
-            options = [""] + annotation['options']
+            options = [""] + annotation.get('options', [])
             st.selectbox(label, options, index=0, help=annotation['tooltip'], key=key)
         elif annotation['type'] == 'textbox':
             st.text_area(label, help=annotation['tooltip'], key=key)
@@ -303,17 +303,26 @@ def schema_creation_page():
                                 section["annotations"][ann_key] = {"name": "", "type": "checkbox", "tooltip": "", "example": ""}
 
                             annotation = section["annotations"][ann_key]
-                            annotation["name"] = st.text_input("Annotation Name", key=f"{section_key}_{ann_key}_name", value=annotation.get("name", ""))
+                            name = st.text_input("Annotation Name", key=f"{section_key}_{ann_key}_name", value=annotation.get("name", ""))
                             annotation["type"] = st.selectbox("Annotation Type", ["checkbox", "likert", "dropdown", "textbox"], key=f"{section_key}_{ann_key}_type", index=["checkbox", "likert", "dropdown", "textbox"].index(annotation.get("type", "checkbox")))
-                            annotation["tooltip"] = st.text_area("Tooltip", key=f"{section_key}_{ann_key}_tooltip", value=annotation.get("tooltip", ""))
-                            annotation["example"] = st.text_area("Example", key=f"{section_key}_{ann_key}_example", value=annotation.get("example", ""))
+                            tooltip = st.text_area("Tooltip", key=f"{section_key}_{ann_key}_tooltip", value=annotation.get("tooltip", ""))
+                            example = st.text_area("Example", key=f"{section_key}_{ann_key}_example", value=annotation.get("example", ""))
 
                             if annotation["type"] == "likert":
-                                annotation["min_value"] = st.number_input("Minimum Value", value=annotation.get("min_value", 0), key=f"{section_key}_{ann_key}_min_value")
-                                annotation["max_value"] = st.number_input("Maximum Value", value=annotation.get("max_value", annotation.get('scale', 5)), key=f"{section_key}_{ann_key}_max_value")
+                                min_value = st.number_input("Minimum Value", value=annotation.get("min_value", 0), key=f"{section_key}_{ann_key}_min_value")
+                                max_value = st.number_input("Maximum Value", value=annotation.get("max_value", annotation.get('scale', 5)), key=f"{section_key}_{ann_key}_max_value")
                             elif annotation["type"] == "dropdown":
-                                options_str = st.text_area("Options (comma-separated)", key=f"{section_key}_{ann_key}_options", value=", ".join(annotation.get("options", [])))
-                                annotation["options"] = [option.strip() for option in options_str.split(',') if option.strip()]
+                                options_str = st.text_area("Options (comma-separated)", key=f"{section_key}_{ann_key}_options", value=','.join(annotation.get("options", [])))
+                                options = [option.strip() for option in options_str.split(',') if option.strip()]
+                            if st.button("Update",  key=f"update_annotation_{section_key}_{ann_key}"):
+                                annotation["name"] = name
+                                annotation["tooltip"] = tooltip
+                                annotation["example"] = example
+                                if annotation["type"] == "likert":
+                                    annotation["min_value"] = min_value
+                                    annotation["max_value"] = max_value
+                                elif annotation["type"] == "dropdown":
+                                    annotation["options"] = options
                     with right_column:
                         if st.button("Delete Annotation", key=f"delete_annotation_{section_key}_{ann_key}"):
                             delete_annotation(section_key, ann_key)
