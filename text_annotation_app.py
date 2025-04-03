@@ -101,7 +101,7 @@ def annotation_page():
                     elif config['type'] == 'likert':
                         default_value = 0
                         min_value = config.get('min_value', 0)
-                        max_value = config.get('max_value', config['scale'])
+                        max_value = config.get('max_value', 5)  # Default to 5 instead of using scale
                         annotated = st.slider(config['name'], min_value, max_value, value=int(data.at[index, full_column_name]) if pd.notna(data.at[index, full_column_name]) else default_value, key=f'{index}_{full_column_name}', help=config['tooltip'], format="%d")
                         st.session_state.annotations[full_column_name] = annotated
                     elif config['type'] == 'dropdown':
@@ -268,7 +268,7 @@ def schema_creation_page():
         elif annotation['type'] == 'likert':
             default_value = 0
             min_value = annotation.get('min_value', 0)
-            max_value = annotation.get('max_value', annotation.get('scale', 5))
+            max_value = annotation.get('max_value', 5)  # Default to 5 instead of using scale
             st.slider(label, min_value, max_value, value=default_value, help=annotation['tooltip'], format="%d", key=key)
         elif annotation['type'] == 'dropdown':
             options = [""] + annotation.get('options', [])
@@ -310,7 +310,7 @@ def schema_creation_page():
 
                             if annotation["type"] == "likert":
                                 min_value = st.number_input("Minimum Value", value=annotation.get("min_value", 0), key=f"{section_key}_{ann_key}_min_value")
-                                max_value = st.number_input("Maximum Value", value=annotation.get("max_value", annotation.get('scale', 5)), key=f"{section_key}_{ann_key}_max_value")
+                                max_value = st.number_input("Maximum Value", value=annotation.get("max_value", 5), key=f"{section_key}_{ann_key}_max_value")
                             elif annotation["type"] == "dropdown":
                                 options_str = st.text_area("Options (comma-separated)", key=f"{section_key}_{ann_key}_options", value=','.join(annotation.get("options", [])))
                                 options = [option.strip() for option in options_str.split(',') if option.strip()]
